@@ -1,0 +1,66 @@
+/* Dedicated small-screen layouts: login and registration lead with the form. */
+.mobile-login-back{display:none}
+
+@media(max-width:1000px){
+  .login-shell{display:flex;flex-direction:column;min-height:100dvh;background:#f7f6ef}
+  .login-left{display:none}
+  .login-right{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;min-height:100dvh;padding:20px max(22px,5vw) 55px}
+  .mobile-login-back{display:inline-flex;align-items:center;align-self:flex-start;gap:9px;min-height:44px;text-decoration:none;color:#496752;font-size:12px;font-weight:700;margin:0 0 12px}
+  .login-form-card{width:100%;max-width:470px;margin:0 auto;padding:20px 0 24px}
+  .login-symbol{width:50px;height:50px;margin:0 0 17px}
+  .login-form-card h2{font-size:clamp(30px,4.7vw,39px);line-height:1.2;margin:9px 0 10px}
+  .login-form-card>p{margin:0 0 20px;font-size:13px;line-height:1.6}
+  .login-switch{margin-bottom:17px}
+  .login-switch button{min-height:48px}
+  .login-form-card form label{margin:13px 0;font-size:11px}
+  .login-input{min-height:52px;border-radius:7px}
+  .login-input input{font-size:16px;padding:14px 0;line-height:1.35}
+  .login-input input::placeholder{color:#a4b0a5}
+  .login-submit{border-radius:7px;min-height:54px;margin-top:18px;font-size:13px}
+  .login-note{margin-top:23px;padding:14px;background:#eeefe6;border-radius:7px}
+}
+
+@media(max-width:600px){
+  .login-right{padding:10px 18px max(28px,env(safe-area-inset-bottom))}
+  .mobile-login-back{margin-bottom:4px}
+  .login-form-card{max-width:430px;padding:10px 0 28px}
+  .login-section-label{letter-spacing:.13em;font-size:9px}
+  .login-form-card h2{font-size:clamp(28px,7.5vw,35px)}
+  .login-form-card>p{font-size:12px}
+  .login-switch{border-radius:9px 9px 0 0;overflow:hidden}
+  .login-switch button{font-size:13px}
+  .login-form-card form label{font-size:10px;letter-spacing:.09em}
+  .login-error{font-size:12px;line-height:1.6;border-radius:5px}
+  .login-note{font-size:11px}
+  .login-symbol{margin-bottom:13px}
+  .writing-actions{position:relative}
+  .workspace-grid{width:100%}
+  .page-meta{flex-wrap:wrap}
+  .writing-card textarea{width:100%;border-radius:6px;line-height:1.6}
+  .writing-card input:not([type=checkbox]){border-radius:6px}
+  .studio-top-actions{flex-wrap:wrap}
+  .studio-top-actions button{flex:1 1 140px}
+  .studio-stats{width:100%;gap:5px}
+  .studio-stats div{flex:1;min-width:0}
+  .studio-stats span{overflow-wrap:anywhere;max-width:none}
+  .studio-editor,.studio-sources,.preview-modal{width:100%;max-width:100%}
+  .preview-paper{max-height:calc(100dvh - 190px)}
+  .preview-modal{min-height:0}
+}
+
+@media(max-width:380px){
+  .login-right{padding-left:15px;padding-right:15px}
+  .login-form-card h2{font-size:27px}
+  .login-section-label{font-size:8px}
+  .login-input{padding:0 10px;gap:7px}
+  .login-note{padding:12px}
+  .page-meta{letter-spacing:0}
+  .studio-top-actions button{font-size:10px}
+}
+
+@media(max-height:650px) and (max-width:1000px){
+  .login-right{min-height:100dvh}
+  .login-form-card{padding-top:4px}
+  .login-symbol{display:none}
+  .login-note{margin-top:15px}
+}

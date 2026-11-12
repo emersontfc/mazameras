@@ -1,0 +1,76 @@
+/* Responsive refinements for the book, account pages and editorial studio. */
+html,body{max-width:100%;overflow-x:clip}
+img,video,svg{max-width:100%}
+button,a,input,textarea,select{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #bc985e;outline-offset:3px}
+.site-shell,.workspace,.studio-shell,.login-shell{width:100%;min-width:0}
+.writing-card,.studio-editor,.studio-index,.studio-sources,.login-form-card{min-width:0}
+.writing-card h2,.writing-card h3,.manuscript-section strong,.editor-instruction,.source-list h4,.studio-editor h2,.preview-chapter>div{overflow-wrap:anywhere}
+.mobile-nav a{display:block;color:#254838;text-decoration:none;padding:13px;font-size:13px}
+.chapter-sidebar{scrollbar-width:thin;scrollbar-color:#aeb9a9 transparent}
+.chapter-link{scroll-snap-align:start}
+.writing-card textarea,.manuscript-textarea{max-width:100%}
+
+@media(min-width:761px) and (max-width:1024px){
+  .hero-left{padding:65px 4vw}.hero h1{font-size:clamp(49px,5.4vw,64px)}
+  .hero-copy{font-size:12px}.hero-right .book-stack{transform:rotate(-7deg) scale(.82)}
+  .workspace-grid{grid-template-columns:190px minmax(0,1fr);gap:20px}.workspace{padding-inline:3vw}
+  .writing-card{padding:30px 25px}.studio-grid{padding-inline:3vw}.studio-top-actions button{padding:9px}.studio-top{padding-inline:3vw}
+}
+
+@media(max-width:760px){
+  .site-header{position:relative;z-index:20}.mobile-nav{position:relative;z-index:19;box-shadow:0 15px 22px #1d382214}
+  .mobile-nav button,.mobile-nav a{min-height:46px;display:flex;align-items:center;font-weight:600}
+  .hero-left{min-width:0}.hero-right{min-height:450px}.workspace-head h1{line-height:1.2}
+  .chapter-sidebar{scroll-snap-type:x proximity;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .writing-card{box-shadow:0 9px 22px #263a2810}
+  .writing-card input:not([type=checkbox]),.writing-card textarea,.manuscript-textarea,.login-input input,.source-search input{font-size:16px}
+  .writing-card textarea{min-height:270px}.writing-actions button{min-height:44px}.consent{font-size:12px;line-height:1.7}
+  .studio-top{gap:15px}.studio-brand{max-width:100%}.studio-brand strong{font-size:15px}
+  .studio-top-actions button{min-height:44px;flex:1;justify-content:center}
+  .studio-heading h1{line-height:1.12}.studio-tabs{overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .studio-tabs button{min-height:56px}.studio-index>button{scroll-snap-align:start}.studio-index{scroll-snap-type:x proximity}
+  .studio-editor{min-height:0}.studio-sources{max-height:none;min-height:0}.source-list{max-height:520px}
+  .preview-actions{flex-wrap:wrap}.preview-actions button{flex:1;min-height:44px}
+  .login-left{min-height:310px}.login-story{margin-top:50px}.login-right{display:block}.login-form-card{margin:auto}
+  .login-submit{min-height:52px}.login-input input{min-width:0}.login-input button{min-width:36px;min-height:44px}.login-switch button{min-height:48px}
+}
+
+@media(max-width:480px){
+  .site-header{padding:0 15px;height:68px;gap:8px}.brand{gap:8px;min-width:0}
+  .brand-mark{width:36px;height:36px;flex-shrink:0}.brand strong{font-size:11px;letter-spacing:.07em;white-space:nowrap}
+  .brand small{font-size:7px;letter-spacing:.12em;white-space:nowrap}.header-right{gap:5px}
+  .header-right>.account-link{display:none}.mobile-menu{min-width:42px;min-height:42px;display:grid;place-items:center}
+  .hero-left{padding:54px 22px 48px}.eyebrow{font-size:9px;letter-spacing:.13em;line-height:1.5}.eyebrow-line{width:23px;flex-shrink:0}
+  .hero h1{font-size:clamp(42px,10.4vw,55px);line-height:1.14;margin:28px 0 19px}.hero-lead{font-size:18px}.hero-copy{font-size:13px}
+  .hero-right{height:445px;min-height:0}.hero-right:before{inset:18px}.book-stack{transform:rotate(-7deg) scale(.7);margin-top:-25px}.book-cover{transform:none}
+  .image-caption{font-size:8px;letter-spacing:.1em;bottom:18px}.hero-foot{margin-top:28px;font-size:10px}
+  .how{padding:57px 22px}.how h2{font-size:31px}.quote-band{padding:35px 16px}.quote-band p{font-size:19px}.closing p{font-size:24px}
+  .workspace{padding:29px 12px 50px}.workspace-head{margin-bottom:22px}.workspace-head h1{font-size:34px}
+  .chapter-sidebar{gap:7px}.chapter-link{font-size:11px;min-height:45px}.writing-card{padding:22px 17px 19px}
+  .page-rule{margin:16px 0 23px}.page-meta{font-size:8px;letter-spacing:.08em}
+  .writing-card h2{font-size:32px;margin-bottom:24px}.writing-card h3{font-size:22px}.writing-card textarea{min-height:300px;padding:13px}
+  .writing-tip{padding:12px;font-size:11px}.writing-actions{gap:8px}.writing-actions .save-button{order:-1;width:100%}
+  .writing-actions .secondary-button{flex:1;min-width:0}.page-footer{margin-top:30px}.auth-box{padding:37px 25px}.auth-box h2{font-size:28px}
+  .login-left{min-height:300px}.login-story h1{font-size:clamp(37px,10vw,45px)}.login-eyebrow{font-size:9px;letter-spacing:.13em}
+  .login-right{padding:32px 19px 60px}.login-form-card h2{font-size:31px}
+  .studio-heading{padding:30px 16px}.studio-heading h1{font-size:38px}.studio-stats strong{font-size:29px}.studio-tabs{gap:17px}
+  .studio-grid{padding:17px 10px}.studio-index>button{min-width:155px;width:155px}.studio-editor{padding:24px 16px}.studio-editor h2{font-size:30px}
+  .editor-topline{font-size:9px;letter-spacing:0}.editor-toolbar{gap:10px;flex-wrap:wrap}.editor-bottom{align-items:stretch;flex-direction:column}
+  .studio-save{justify-content:center;min-height:46px}.manuscript-textarea{font-size:16px;line-height:31px;height:360px}
+  .preview-header{flex-wrap:wrap}.preview-header button{min-height:40px}.preview-actions{padding:14px}.preview-actions button{width:100%;flex-basis:100%}
+  .preview-cover{padding:45px 15px}.preview-cover h1{font-size:29px}.footer{padding:25px 20px;line-height:1.8}
+}
+
+@media(max-width:360px){
+  .brand strong{font-size:10px;letter-spacing:0}.brand small{font-size:6.5px}
+  .hero h1{font-size:39px}.hero-right{height:395px}.book-stack{transform:rotate(-7deg) scale(.61)}
+  .page-meta{flex-direction:column;gap:5px}.login-story h1{font-size:35px}.login-form-card h2{font-size:28px}
+  .studio-brand strong{font-size:13px}.studio-top-actions button{font-size:10px;padding:10px 6px}
+}
+
+@media(orientation:landscape) and (max-height:500px) and (max-width:950px){
+  .hero{min-height:0}.hero-left{padding-top:35px;padding-bottom:35px}.hero-right{height:400px}
+  .auth-overlay{align-items:start;overflow:auto}.auth-box{margin:18px auto}.login-left{min-height:250px}.login-story{margin-top:35px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
