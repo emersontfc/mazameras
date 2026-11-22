@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { openDatabase } from '../server/database.mjs';
+import { localBucket } from '../server/storage.mjs';
+import { drizzle } from 'drizzle-orm/d1';
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { eq } from 'drizzle-orm';
+const directory = await mkdtemp(join(tmpdir(), 'medicina-runtime-'));
+const {sqlite,client} = openDatabase(directory);
+const accounts=sqliteTable('accounts',{id:text('id').primaryKey(),username:text('username'),displayName:text('display_name'),passwordHash:text('password_hash'),salt:text('salt'),role:text('role'),createdAt:integer('created_at')});
+const emails=sqliteTable('account_emails',{accountId:text('account_id').primaryKey(),email:text('email')});
+const db=drizzle(client);
+try {
+ await db.insert(accounts).values({id:'one',username:'ana',displayName:'Ana',passwordHash:'hash',salt:'salt',role:'author',createdAt:Date.now()});
+ assert.equal((await db.select().from(accounts))[0].username,'ana');
+ await db.batch([db.insert(emails).values({accountId:'one',email:'ana@example.test'}),db.update(accounts).set({displayName:'Ana Maria'}).where(eq(accounts.id,'one'))]);
+ assert.equal((await db.select({name:accounts.displayName,email:emails.email}).from(accounts).innerJoin(emails,eq(accounts.id,emails.accountId)))[0].name,'Ana Maria');
+ await assert.rejects(()=>db.batch([db.update(accounts).set({displayName:'Rollback'}),db.insert(emails).values({accountId:'one',email:'duplicate'})]));
+ assert.equal((await db.select().from(accounts))[0].displayName,'Ana Maria');
+ const returned=await db.delete(emails).where(eq(emails.accountId,'one')).returning();assert.equal(returned.length,1);
+ await db.insert(emails).values({accountId:'one',email:'new@example.test'}).onConflictDoUpdate({target:emails.accountId,set:{email:'new@example.test'}});
+ assert.equal((await db.select().from(emails))[0].email,'new@example.test');
+ const bucket=localBucket(join(directory,'uploads'));
+ await bucket.put('photos/one/test',new Uint8Array([1,2,3]));assert.deepEqual([...(await bucket.get('photos/one/test')).body],[1,2,3]);
+ await assert.rejects(()=>bucket.get('../book.sqlite'));
+ await bucket.delete('photos/one/test');assert.equal(await bucket.get('photos/one/test'),null);
+ sqlite.close();const reopened=openDatabase(directory);assert.equal(reopened.sqlite.prepare('select count(*) as n from accounts').get().n,1);reopened.sqlite.close();
+ console.log('PASS: migrations, persistence, Drizzle reads/joins/upserts/returning, batch rollback, private files and path traversal protection.');
+} finally {await rm(directory,{recursive:true,force:true});}

@@ -43,3 +43,8 @@ yarn-error.log*
 
 # OS metadata
 .DS_Store
+
+# VPS persistent data and backups
+/data/
+/backups/
+*.sqlite*

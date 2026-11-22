@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers';
+import { env } from '../../../server/environment';
 import { getDb } from '../../../db';
 import { accounts, accountEmails, passwordResets, sessions, loginAttempts } from '../../../db/schema';
 import { eq, and, gt } from 'drizzle-orm';

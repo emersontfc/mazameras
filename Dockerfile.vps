@@ -1,0 +1,21 @@
+FROM node:24-bookworm-slim AS build
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY . .
+RUN npm run build
+
+FROM node:24-bookworm-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 DATA_DIR=/data PORT=3000 HOSTNAME=0.0.0.0
+COPY --from=build --chown=node:node /app/.next/standalone ./
+COPY --from=build --chown=node:node /app/.next/static ./.next/static
+COPY --from=build --chown=node:node /app/public ./public
+COPY --from=build --chown=node:node /app/drizzle ./drizzle
+COPY --from=build --chown=node:node /app/server ./server
+COPY --from=build --chown=node:node /app/deploy ./deploy
+RUN mkdir /data && chown node:node /data
+USER node
+EXPOSE 3000
+CMD ["node", "deploy/start.mjs"]

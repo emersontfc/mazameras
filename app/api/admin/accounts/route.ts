@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers';
+import { env } from '../../../../server/environment';
 import { currentAccount, digest, randomHex, passwordHash, adminUsername } from '../../../../lib/account-auth';
 import { getDb } from '../../../../db';
 import { accounts, accountEmails, passwordResets, sessions, avatars, loginAttempts } from '../../../../db/schema';

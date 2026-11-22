@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers';
+import { env } from '../server/environment';
 import { cookies } from 'next/headers';
 import { getDb } from '../db';
 import { accounts, sessions } from '../db/schema';
