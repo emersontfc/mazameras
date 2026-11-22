@@ -1,0 +1,5 @@
+'use client';
+import {useEffect,useState} from 'react';
+import ProfileEditor from '../../components/profile-editor';
+import '../studio/contas/dashboard.css';
+export default function Profile(){const [account,setAccount]=useState<{id:string;displayName:string;username:string}|null>(null);const [error,setError]=useState('');useEffect(()=>{fetch('/api/profile',{cache:'no-store'}).then(async r=>{const d=await r.json() as {account:typeof account;error:string};if(!r.ok)throw Error(d.error);setAccount(d.account)}).catch(e=>setError(e.message))},[]);return <main className="accounts-dashboard"><a href="/">← Voltar ao livro</a><header className="accounts-heading"><div><span className="accounts-eyebrow">A TUA VOZ NO LIVRO</span><h1>O meu perfil.</h1><p>Atualiza o teu nome e a tua fotografia.</p></div></header>{error&&<p role="alert">{error} <a href="/entrar">Entrar</a></p>}{account?<><p>@{account.username}</p><ProfileEditor accountId={account.id} initialName={account.displayName}/></>:!error&&<p>A carregar o perfil…</p>}</main>}

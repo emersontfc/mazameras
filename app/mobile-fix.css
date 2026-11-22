@@ -64,3 +64,8 @@
   .login-symbol{display:none}
   .login-note{margin-top:15px}
 }
+
+/* Keep the full book title legible in the header on narrow screens. */
+.brand strong{max-width:240px;white-space:normal;line-height:1.25;letter-spacing:.03em}
+@media(max-width:780px){.brand strong{max-width:180px;font-size:12px;white-space:normal}}
+@media(max-width:450px){.brand strong{max-width:145px;font-size:11px;white-space:normal}}

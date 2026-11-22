@@ -1,7 +1,7 @@
 import { currentAccount } from '../../../lib/account-auth';
 import { getDb } from '../../../db';
-import { entries, editorialPages } from '../../../db/schema';
-import { eq } from 'drizzle-orm';
+import { entries, editorialPages, photos } from '../../../db/schema';
+import { eq, and } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +13,12 @@ async function isEditor() {
 export async function GET() {
   if (!await isEditor()) return Response.json({ error: 'Acesso reservado ao editor.' }, { status: 403 });
   const db = getDb();
-  const [contributions, pages] = await Promise.all([
+  const [contributions, pages, sharedPhotos] = await Promise.all([
     db.select({ id: entries.id, author: entries.author, chapter: entries.chapter, question: entries.question, answer: entries.answer, updatedAt: entries.updatedAt, userId: entries.userId }).from(entries).where(eq(entries.visibility, 'book')),
     db.select().from(editorialPages),
+    db.select({ id: photos.id, userId: photos.userId, question: photos.question, caption: photos.caption, people: photos.people }).from(photos).innerJoin(entries, and(eq(photos.userId, entries.userId), eq(photos.question, entries.question))).where(and(eq(photos.publicationConsent, true), eq(entries.visibility, 'book'))),
   ]);
-  return Response.json({ contributions, pages });
+  return Response.json({ contributions, pages, photos: sharedPhotos }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
 
 export async function PUT(request: Request) {

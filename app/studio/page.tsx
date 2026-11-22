@@ -1,9 +1,11 @@
 'use client';
 
+import BookReader from '../../components/book-reader';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, BookOpen, Check, ChevronRight, ClipboardList, Download, Feather, FileText, Heart, LibraryBig, LockKeyhole, PenTool, Printer, Quote, RefreshCw, Save, Search, Sparkles, Users } from 'lucide-react';
 
 type Contribution = { id: string; userId: string; author: string; chapter: string; question: string; answer: string; updatedAt: number };
+type SharedPhoto = { id: string; userId: string; question: string; caption: string; people: string };
 type Page = { key: string; title: string; category: string; body: string; status: 'draft' | 'review' | 'approved'; updatedAt: number };
 const sections = [
   { id: 'origens', title: 'Antes da bata branca', match: 'Antes da bata branca' },
@@ -16,6 +18,7 @@ const sections = [
 
 export default function Studio() {
   const [contributions, setContributions] = useState<Contribution[]>([]);
+  const [sharedPhotos, setSharedPhotos] = useState<SharedPhoto[]>([]);
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
   const [denied, setDenied] = useState(false);
@@ -36,8 +39,8 @@ export default function Studio() {
       const r = await fetch('/api/editorial', { cache: 'no-store' });
       if (r.status === 403) { setDenied(true); return; }
       if (!r.ok) throw Error('Não foi possível carregar o estúdio.');
-      const data = await r.json() as { contributions: Contribution[]; pages: Page[] };
-      setContributions(data.contributions); setPages(data.pages); setError('');
+      const data = await r.json() as { contributions: Contribution[]; pages: Page[]; photos?: SharedPhoto[] };
+      setSharedPhotos(data.photos || []); setContributions(data.contributions); setPages(data.pages); setError('');
     } catch(e) { setError(e instanceof Error ? e.message : 'Erro ao carregar.'); }
     finally { setLoading(false); }
   }
@@ -99,8 +102,8 @@ export default function Studio() {
   }
   function manuscript() {
     return [
-      '# A VIDA DE UM ESTUDANTE DE MEDICINA — VOLUME II',
-      '## Vidas que Curam', '',
+      '# A VIDA DUM ESTUDANTE DE MEDICINA — VOLUME II',
+      '## A Vida dum Estudante de Medicina', '',
       '### PRIMEIRA PARTE · A NOSSA HISTÓRIA',
       ...sections.map(s => pages.find(p => p.key === `collective:${s.id}`)).filter(Boolean).map(p => `\n## ${p!.title}\n\n${p!.body}\n\n_Estado editorial: ${p!.status}_`),
       '\n### SEGUNDA PARTE · AS NOSSAS VOZES',
@@ -118,15 +121,15 @@ export default function Studio() {
   if (loading) return <div className="studio-gate"><BookOpen size={38}/><h1>A abrir o estúdio…</h1></div>;
   if (error) return <div className="studio-gate"><h1>Não foi possível abrir o estúdio.</h1><p>{error}</p><button onClick={refresh}>Tentar novamente</button></div>;
 
-  return <div className="studio-shell">
-    <header className="studio-top"><a href="/" className="studio-back"><ArrowLeft size={17}/> Voltar ao livro</a><div className="studio-brand"><span>✳</span><div><strong>ESTÚDIO EDITORIAL</strong><small>VIDAS QUE CURAM · VOLUME II</small></div></div><div className="studio-top-actions"><button onClick={() => setShowPreview(true)}><BookOpen size={16}/> Pré-visualizar livro</button><button className="studio-export" onClick={download}><Download size={16}/> Exportar manuscrito</button></div></header>
+  return <div className="studio-shell"><a href="/studio/contas" style={{display:"block",padding:16}}>Gerir contas e repor senhas →</a>
+    <header className="studio-top"><a href="/" className="studio-back"><ArrowLeft size={17}/> Voltar ao livro</a><div className="studio-brand"><span>✳</span><div><strong>ESTÚDIO EDITORIAL</strong><small>A Vida dum Estudante de Medicina · VOLUME II</small></div></div><div className="studio-top-actions"><button onClick={() => setShowPreview(true)}><BookOpen size={16}/> Pré-visualizar livro</button><button className="studio-export" onClick={download}><Download size={16}/> Exportar manuscrito</button></div></header>
     <div className="studio-heading"><div><span className="studio-kicker">O TEU ESPAÇO DE CRIAÇÃO</span><h1>Das memórias ao <em>livro.</em></h1><p>Organiza, revê e transforma testemunhos autorizados num legado para a turma.</p></div><div className="studio-stats"><div><strong>{authors.length}</strong><span>Autores</span></div><div><strong>{contributions.length}</strong><span>Respostas autorizadas</span></div><div><strong>{pages.filter(p => p.status === 'approved').length}</strong><span>Páginas aprovadas</span></div></div></div>
     <div className="studio-tabs"><button className={mode === 'collective' ? 'on' : ''} onClick={() => switchMode('collective')}><LibraryBig size={18}/> Narrativa coletiva</button><button className={mode === 'individual' ? 'on' : ''} onClick={() => switchMode('individual')}><Users size={18}/> Páginas individuais</button><button className={mode === 'dedication' ? 'on' : ''} onClick={() => switchMode('dedication')}><Heart size={18}/> Dedicatórias</button></div>
     <div className="studio-grid">
       <aside className="studio-index"><div className="studio-label">{mode === 'collective' ? 'CAPÍTULOS DO LIVRO' : 'AUTORES'}</div>{items.length ? items.map((item,i) => <button key={item.key} className={active?.key === item.key ? 'active' : ''} onClick={() => choose(item.key)}><span className="index-num">{String(i + 1).padStart(2,'0')}</span><span className="index-main">{item.title}<small>{item.count} testemunhos · {pages.some(p => p.key === item.key) ? 'Rascunho iniciado' : 'Por começar'}</small></span><ChevronRight size={15}/></button>) : <p className="no-sources">Ainda não há respostas autorizadas nesta secção.</p>}<div className="studio-hint"><Feather size={21}/><p>As respostas originais nunca são alteradas no Estúdio Editorial.</p></div></aside>
       <section className="studio-editor">{active ? <><div className="editor-topline"><span><PenTool size={14}/> PÁGINA EDITORIAL</span><span>{dirty ? '● Alterações não guardadas' : stored ? '✓ Guardada' : 'Nova página'}</span></div><h2>{active.title}</h2><p className="editor-instruction">{mode === 'collective' ? 'Constrói a história coletiva deste capítulo, ligando experiências dos diferentes colegas.' : mode === 'individual' ? 'Cria uma página biográfica e narrativa para este colega, preservando a sua voz.' : 'Organiza as cartas e dedicatórias deste colega com cuidado e respeito.'}</p><div className="editor-toolbar"><label>ESTADO EDITORIAL <select value={status} onChange={e => {setStatus(e.target.value as Page['status']);setDirty(true)}}><option value="draft">Rascunho</option><option value="review">Em revisão</option><option value="approved">Aprovado</option></select></label><span>{text.length.toLocaleString('pt-PT')} caracteres</span></div><textarea className="manuscript-textarea" value={text} onChange={e => {setText(e.target.value);setDirty(true)}} placeholder="Começa com uma abertura cativante ou seleciona testemunhos à direita para construir esta página.\n\nCada voz merece ser fielmente representada…"/><div className="editor-bottom"><span className="save-feedback" role="status">{saveStatus || 'As mudanças editoriais são guardadas quando clicas em Guardar.'}</span><button className="studio-save" onClick={save}><Save size={17}/> Guardar página</button></div><div className="editor-caution"><Sparkles size={17}/><p><strong>Preparado para edição com IA.</strong> A futura ferramenta poderá sugerir transições e melhorar o estilo, sempre com comparação do original e aprovação humana. Nesta versão, a composição é manual e verificável.</p></div></> : <div className="empty-editor"><FileText size={35}/><h2>À espera de histórias</h2><p>Quando os colegas contribuírem e autorizarem o uso das respostas, as páginas aparecerão aqui.</p></div>}</section>
-      <aside className="studio-sources"><div className="sources-head"><div><span className="studio-label">MATÉRIA-PRIMA DO LIVRO</span><h3>Testemunhos</h3></div><span>{sources.length}</span></div><label className="source-search"><Search size={16}/><input placeholder="Procurar nas histórias…" value={query} onChange={e => setQuery(e.target.value)}/></label><p className="sources-explain">Apenas respostas que os colegas autorizaram para o livro.</p><div className="source-list">{sources.length ? sources.map(s => <article key={s.id}><label className="source-check"><input type="checkbox" checked={selectedSources.includes(s.id)} onChange={e => setSelectedSources(old => e.target.checked ? [...old,s.id] : old.filter(id => id !== s.id))}/><span>{s.author}</span></label><h4>{s.question}</h4><p>{s.answer}</p><button onClick={() => insert(s)}><Quote size={13}/> Inserir no manuscrito</button></article>) : <div className="no-sources">Sem testemunhos autorizados para esta página.</div>}</div><button className="assemble-button" disabled={!selectedSources.length} onClick={assemble}><ClipboardList size={16}/> Reunir {selectedSources.length || ''} testemunhos selecionados</button></aside>
+      <aside className="studio-sources"><div className="sources-head"><div><span className="studio-label">MATÉRIA-PRIMA DO LIVRO</span><h3>Testemunhos</h3></div><span>{sources.length}</span></div><label className="source-search"><Search size={16}/><input placeholder="Procurar nas histórias…" value={query} onChange={e => setQuery(e.target.value)}/></label><p className="sources-explain">Apenas respostas que os colegas autorizaram para o livro.</p><div className="source-list">{sources.length ? sources.map(s => <article key={s.id}><label className="source-check"><input type="checkbox" checked={selectedSources.includes(s.id)} onChange={e => setSelectedSources(old => e.target.checked ? [...old,s.id] : old.filter(id => id !== s.id))}/><span>{s.author}</span></label><h4>{s.question}</h4><p>{s.answer}</p>{sharedPhotos.filter(p => p.userId === s.userId && p.question === s.question).map(p => <figure className="editorial-photo" key={p.id}><a href={`/api/photos/${p.id}`} target="_blank" rel="noreferrer"><img src={`/api/photos/${p.id}`} alt={p.caption} loading="lazy"/></a><figcaption>{p.caption}<span>Na fotografia: {p.people}</span><small>Fotografia autorizada para o livro</small></figcaption></figure>)}<button onClick={() => insert(s)}><Quote size={13}/> Inserir no manuscrito</button></article>) : <div className="no-sources">Sem testemunhos autorizados para esta página.</div>}</div><button className="assemble-button" disabled={!selectedSources.length} onClick={assemble}><ClipboardList size={16}/> Reunir {selectedSources.length || ''} testemunhos selecionados</button></aside>
     </div>
-    {showPreview && <div className="preview-overlay"><div className="preview-modal"><div className="preview-header"><div><span>PRÉ-VISUALIZAÇÃO DO MANUSCRITO</span><h2>A Vida de um Estudante de Medicina · Volume II</h2></div><button onClick={() => setShowPreview(false)}>Fechar ✕</button></div><div className="preview-paper"><div className="preview-cover"><span>VIDAS QUE CURAM</span><h1>A vida de um<br/><em>estudante de</em><br/>Medicina</h1><p>Volume II · Memórias de uma geração · 2026</p></div>{pages.filter(p => p.body.trim()).sort((a,b) => {const order = (p: Page) => p.category === 'collective' ? 0 : p.category === 'individual' ? 1 : 2; return order(a)-order(b);}).map(p => <section className="preview-chapter" key={p.key}><small>{p.category === 'collective' ? 'A NOSSA HISTÓRIA' : p.category === 'individual' ? 'AS NOSSAS VOZES' : 'CARTAS PARA GUARDAR'}</small><h2>{p.title}</h2><div>{p.body}</div><small>ESTADO: {p.status}</small></section>)}</div><div className="preview-actions"><button onClick={() => window.print()}><Printer size={16}/> Imprimir / guardar como PDF</button><button onClick={download}><Download size={16}/> Descarregar Markdown</button></div></div></div>}
+    {showPreview && <BookReader pages={dirty && active ? [...pages.filter(p=>p.key!==active.key),{key:active.key,title:active.title,category:mode,body:text,status,updatedAt:Date.now()}] : pages} contributions={contributions} photos={sharedPhotos} onClose={()=>setShowPreview(false)}/>}
   </div>;
 }

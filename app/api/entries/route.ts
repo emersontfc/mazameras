@@ -15,7 +15,7 @@ export async function GET() {
   const actor = await writer();
   if (!actor) return Response.json({ error: 'Inicia sessão para continuares.' }, { status: 401 });
   const records = await getDb().select().from(entries).where(eq(entries.userId, actor.id));
-  return Response.json({ entries: records, user: { name: actor.name, email: actor.email } });
+  return Response.json({ entries: records, user: { name: actor.name, email: actor.email } }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
 
 export async function POST(request: Request) {
