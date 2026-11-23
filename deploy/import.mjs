@@ -1,5 +1,6 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { openDatabase } from '../server/database.mjs';
 import { localBucket } from '../server/storage.mjs';
 
@@ -16,7 +17,10 @@ for (const table of tableNames) if (!Array.isArray(snapshot.tables[table])) thro
 const assets = [...snapshot.tables.photos, ...snapshot.tables.avatars];
 for (const asset of assets) {
   if (!/^(photos|avatars)\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+$/.test(asset.object_key)) throw Error('Invalid asset path');
-  if (!existsSync(resolve(backupDirectory, 'uploads', asset.object_key))) throw Error('Missing asset: '+asset.object_key);
+  const filename = resolve(backupDirectory, 'uploads', asset.object_key);
+  if (!existsSync(filename)) throw Error('Missing asset: '+asset.object_key);
+  const hash = createHash('sha256').update(readFileSync(filename)).digest('hex');
+  if (snapshot.assetSha256 && snapshot.assetSha256[asset.object_key] !== hash) throw Error('Image checksum mismatch: '+asset.object_key);
 }
 const bucket = localBucket();
 // Copy objects first: an interrupted copy leaves no imported database records.

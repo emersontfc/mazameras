@@ -34,24 +34,27 @@ respostas nesta cópia vazia antes da importação.
 
 ## Transferir os dados e imagens
 
-A exportação privada deve incluir todas as tabelas da origem, sem truncar
-valores, e os objetos R2 referidos por `photos.object_key` e `avatars.object_key`.
-Contas, hashes e respostas nunca devem ser publicados no GitHub.
+A origem tem uma rota de exportação reservada ao administrador. O exportador
+pede as credenciais **do site atual** no terminal e não mostra nem guarda a senha.
+Essa senha pode ser diferente da nova senha configurada para a VPS.
 
-Formato esperado numa pasta privada `backups/origem/`:
-
-- `database.json`: `{ "format": "medicina-vps-v1", "tables": { "accounts": [...], ... } }`.
-- Todas as nove tabelas: accounts, account_emails, avatars, editorial_pages,
-  entries, login_attempts, password_resets, photos, sessions. Usar nomes das colunas
-  da base de dados (`user_id`, `password_hash`, etc.), não os nomes do frontend.
-- `uploads/<object_key>`: bytes originais das fotografias e avatares.
-
-Suspender escritas no site de origem para a exportação final. Esta etapa ainda
-precisa de uma exportação íntegra da base e dos ficheiros do Sites.
-Não alterar o DNS enquanto esses dados não estiverem importados e verificados.
+Depois de confirmar que a cópia na VPS funciona, suspender as escritas na origem
+para a exportação final. Não mudar o DNS até terminar a importação e validação.
 
 ```bash
+mkdir -p backups
+chmod 700 backups
 docker compose -f compose.vps.yaml stop livro
+docker compose -f compose.vps.yaml run --rm --no-deps \
+  -v "$PWD/backups:/backup" livro node deploy/export-sites.mjs /backup/origem
+```
+
+O comando cria `backups/origem/database.json` e `uploads/` com as imagens.
+Verifica os nove conjuntos de registos, calcula SHA-256 de todas as imagens e
+recusa misturar exportações numa pasta existente. Se houver erro, manter o site
+original e corrigir antes de avançar. Não publicar `backups/` no GitHub.
+
+```bash
 docker compose -f compose.vps.yaml run --rm --no-deps \
   -v "$PWD/backups/origem:/backup:ro" livro node deploy/import.mjs /backup
 docker compose -f compose.vps.yaml up -d
