@@ -1,16 +1,126 @@
 'use client';
-import {useEffect,useState} from 'react';
-import './dashboard.css';
+import { useEffect, useRef, useState, type ReactNode, type FormEvent } from 'react';
+import { Search, Plus, KeyRound, Pencil, X, Copy, Mail, Users, ShieldCheck, Trash2, CheckCircle2 } from 'lucide-react';
 import ProfileEditor from '../../../components/profile-editor';
-type Account={id:string;username:string;displayName:string;email:string|null;role:string;createdAt:number};
-export default function Accounts(){
- const [deleting,setDeleting]=useState<Account|null>(null);const [confirmDelete,setConfirmDelete]=useState('');
- async function remove(e:React.FormEvent){e.preventDefault();if(!deleting)return;setBusy(deleting.id);setMessage('');try{const r=await fetch('/api/admin/accounts',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({accountId:deleting.id,confirmation:confirmDelete})});const d=await r.json() as {error?:string;message:string};if(!r.ok)throw Error(d.error);setMessage(d.message);setDeleting(null);setConfirmDelete('');setLink('');await load();}catch(e){setMessage(e instanceof Error?e.message:'Erro ao eliminar.')}finally{setBusy('')}}
- const [editing,setEditing]=useState<string|null>(null);const [creating,setCreating]=useState(false);
- async function create(e:React.FormEvent<HTMLFormElement>){e.preventDefault();const form=e.currentTarget;setBusy('create');try{const data=Object.fromEntries(new FormData(form));const r=await fetch('/api/admin/accounts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,action:'create'})});const d=await r.json() as {error?:string;message:string};if(!r.ok)throw Error(d.error);setMessage(d.message);form.reset();setCreating(false);await load();}catch(e){setMessage(e instanceof Error?e.message:'Erro ao cadastrar.')}finally{setBusy('')}}
- const [accounts,setAccounts]=useState<Account[]>([]);const [query,setQuery]=useState('');const [ready,setReady]=useState(false);const [message,setMessage]=useState('');const [link,setLink]=useState('');const [busy,setBusy]=useState('');
- async function load(){try{const r=await fetch('/api/admin/accounts',{cache:'no-store'});const d=await r.json() as {error?:string;accounts:Account[];emailReady:boolean;message:string;link?:string};if(!r.ok)throw Error(d.error || 'Não foi possível concluir.');setAccounts(d.accounts);setReady(d.emailReady);}catch(e){setMessage(e instanceof Error?e.message:'Erro ao carregar.');}}
- useEffect(()=>{void load()},[]);
- async function act(a:Account,action:string){let email:string|null=null;if(action==='email'){email=prompt('Confirma a identidade do colega antes de associar um e-mail. E-mail do titular:',a.email||'');if(email===null)return;}setBusy(a.id);setMessage('');setLink('');try{const r=await fetch('/api/admin/accounts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accountId:a.id,action,email})});const d=await r.json() as {error?:string;accounts:Account[];emailReady:boolean;message:string;link?:string};if(!r.ok)throw Error(d.error || 'Não foi possível concluir.');setMessage(d.message);setLink(d.link||'');if(action==='email')await load();}catch(e){setMessage(e instanceof Error?e.message:'Não foi possível concluir.')}finally{setBusy('')}}
- return <main className="accounts-dashboard" style={{maxWidth:1000,margin:'auto',padding:'32px 20px'}}><a href="/studio">← Voltar ao estúdio</a><header className="accounts-heading"><div><span className="accounts-eyebrow">ESTÚDIO EDITORIAL · ADMINISTRAÇÃO</span><h1>As vozes do nosso livro.</h1><p>Uma turma, muitas histórias. Gere as contas e ajuda cada colega a voltar a escrever.</p></div><span className="accounts-badge">Gestão de utilizadores</span></header><button onClick={()=>setCreating(!creating)}>{creating?'Fechar cadastro':'+ Cadastrar utilizador'}</button>{creating&&<form onSubmit={create} className="profile-editor"><h2>Novo utilizador</h2><label>Nome completo<input name="displayName" required minLength={3} maxLength={100}/></label><label>Nome de utilizador<input name="username" required pattern="[a-zA-Z0-9._-]{3,30}" autoComplete="off"/><small>3 a 30 letras sem acentos, números, ponto, hífen ou sublinhado.</small></label><label>E-mail<input name="email" type="email" required maxLength={254}/></label><label>Palavra-passe inicial<input name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={128}/></label><button disabled={!!busy}>Criar conta de autor</button></form>}<section className="accounts-stats" aria-label="Resumo de contas"><div><span>Total de contas</span><strong>{accounts.length}</strong><small>Pessoas cadastradas</small></div><div><span>Autores</span><strong>{accounts.filter(a=>a.role!=='admin').length}</strong><small>Vozes da nossa história</small></div><div><span>Com e-mail</span><strong>{accounts.filter(a=>a.email).length}</strong><small>Contacto associado</small></div><div><span>Precisam de e-mail</span><strong>{accounts.filter(a=>!a.email).length}</strong><small>Contas a completar</small></div></section><p>{accounts.length} contas cadastradas. Gere o acesso de cada colega.</p>{!ready&&<p role="status">O envio por e-mail aguarda configuração. Podes gerar um link e partilhá-lo diretamente com o titular.</p>}<label>Procurar por nome, utilizador ou e-mail<input style={{display:'block',padding:14,width:'100%',margin:'12px 0'}} value={query} onChange={e=>setQuery(e.target.value)}/></label>{message&&<p role="status">{message}</p>}{link&&<div><input aria-label="Link de reposição" readOnly value={link} style={{width:'100%',padding:12}}/><button onClick={()=>navigator.clipboard.writeText(link).then(()=>setMessage('Link copiado.')).catch(()=>setMessage('Seleciona e copia o link acima.'))}>Copiar link</button></div>}<div style={{display:'grid',gap:16,marginTop:24}}>{accounts.filter(a=>`${a.displayName} ${a.username} ${a.email||''}`.toLowerCase().includes(query.toLowerCase())).map(a=><article key={a.id} style={{border:'1px solid #ccd3c5',padding:20,borderRadius:8}}><div className="account-avatar" aria-hidden="true"><img src={`/api/profile?photo=1&id=${encodeURIComponent(a.id)}`} alt="" onError={e=>{e.currentTarget.style.display='none'}}/>{a.displayName.split(' ').filter(Boolean).slice(0,2).map(n=>n[0]).join('')}</div><h2>{a.displayName}</h2><button onClick={()=>setEditing(editing===a.id?null:a.id)}>{editing===a.id?'Fechar perfil':'Editar nome e fotografia'}</button>{editing===a.id&&<ProfileEditor accountId={a.id} initialName={a.displayName} onSaved={()=>void load()}/>}<p>@{a.username} · {a.role==='admin'?'Administrador':'Autor'} · Cadastro: {new Date(a.createdAt).toLocaleDateString('pt-PT')}</p><p>{a.email||'Sem e-mail associado'}</p>{a.role!=='admin'&&<div style={{display:'flex',flexWrap:'wrap',gap:12}}><button disabled={!!busy} onClick={()=>act(a,'email')}>Associar / corrigir e-mail</button><button disabled={!!busy} onClick={()=>act(a,'link')}>Gerar link de reposição</button><button className="account-danger" disabled={!!busy} onClick={()=>{setDeleting(a);setConfirmDelete('')}}>Eliminar conta</button><button className="account-primary" disabled={!!busy||!ready||!a.email} onClick={()=>act(a,'send')}>Enviar link por e-mail</button></div>}</article>)}{accounts.length>0 && !accounts.some(a=>`${a.displayName} ${a.username} ${a.email||''}`.toLowerCase().includes(query.toLowerCase())) && <p className="account-empty">Nenhum colega encontrado. Experimenta outro nome ou e-mail.</p>}</div>{deleting&&<div className="account-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title"><form onSubmit={remove}><span className="accounts-eyebrow">GESTÃO DE ACESSO</span><h2 id="delete-title">Eliminar a conta de {deleting.displayName}?</h2><p>Esta ação é definitiva. Remove o acesso, os dados de login e a foto de perfil. Os testemunhos e as fotografias já enviados para o livro serão preservados.</p><label>Escreve <strong>{deleting.username}</strong> para confirmar<input autoFocus required value={confirmDelete} onChange={e=>setConfirmDelete(e.target.value)} autoComplete="off"/></label><div><button type="button" disabled={!!busy} onClick={()=>setDeleting(null)}>Cancelar</button><button className="account-danger" disabled={!!busy||confirmDelete!==deleting.username} type="submit">{busy?'A eliminar…':'Eliminar definitivamente'}</button></div></form></div>}</main>
+import './dashboard.css';
+
+type Account = { id: string; username: string; displayName: string; email: string | null; role: string; createdAt: number };
+type Mode = 'edit' | 'reset' | 'delete';
+type Feedback = { text: string; error?: boolean } | null;
+
+function Modal({ title, children, busy, onClose }: { title: string; children: ReactNode; busy: boolean; onClose: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => { const dialog = ref.current; dialog?.showModal(); return () => { dialog?.close(); }; }, []);
+  return <dialog ref={ref} className="accounts-dialog" onCancel={e => { e.preventDefault(); if (!busy) onClose(); }} aria-labelledby="account-dialog-title">
+    <header className="accounts-dialog-head"><h2 id="account-dialog-title">{title}</h2><button type="button" className="icon-button" aria-label="Fechar janela" disabled={busy} onClick={onClose}><X size={22}/></button></header>{children}
+  </dialog>;
+}
+
+export default function Accounts() {
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [emailReady, setEmailReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [denied, setDenied] = useState(false);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [selected, setSelected] = useState<{ id: string; mode: Mode } | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback>(null);
+  const [notice, setNotice] = useState('');
+  const [link, setLink] = useState('');
+  const [email, setEmail] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [identityConfirmed, setIdentityConfirmed] = useState(false);
+  const target = accounts.find(a => a.id === selected?.id);
+
+  async function load() {
+    setLoading(true); setLoadError('');
+    try {
+      const r = await fetch('/api/admin/accounts', { cache: 'no-store' });
+      if (r.status === 401 || r.status === 403) { setDenied(true); return; }
+      const data = await r.json() as { accounts: Account[]; emailReady: boolean; error?: string };
+      if (!r.ok) throw Error(data.error || 'Não foi possível carregar as contas.');
+      setAccounts(data.accounts); setEmailReady(data.emailReady); setDenied(false);
+    } catch (e) { setLoadError((e as Error).message); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { void load(); }, []);
+
+  function open(account: Account, mode: Mode) {
+    setSelected({ id: account.id, mode }); setFeedback(null); setNotice(''); setLink(''); setEmail(account.email || ''); setConfirmation(''); setIdentityConfirmed(false);
+  }
+  function close() { if (!busy) { setSelected(null); setCreating(false); setFeedback(null); setLink(''); } }
+  async function request(body: Record<string, unknown>, method = 'POST') {
+    const r = await fetch('/api/admin/accounts', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await r.json() as { message: string; link?: string; error?: string };
+    if (!r.ok) throw Error(data.error || 'Não foi possível concluir. Tenta novamente.');
+    return data as { message: string; link?: string };
+  }
+  async function act(action: 'email' | 'link' | 'send') {
+    if (!target) return;
+    setBusy(true); setFeedback(null);
+    try {
+      const data = await request({ action, accountId: target.id, ...(action === 'email' ? { email } : {}) });
+      setFeedback({ text: data.message });
+      if (data.link) setLink(data.link);
+      if (action === 'email') await load();
+    } catch (e) { setFeedback({ text: (e as Error).message, error: true }); }
+    finally { setBusy(false); }
+  }
+  async function create(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setFeedback(null);
+    try {
+      const data = await request({ ...Object.fromEntries(new FormData(event.currentTarget)), action: 'create' });
+      setCreating(false); setNotice(data.message); await load();
+    } catch (e) { setFeedback({ text: (e as Error).message, error: true }); }
+    finally { setBusy(false); }
+  }
+  async function remove(event: FormEvent) {
+    event.preventDefault(); if (!target) return;
+    setBusy(true); setFeedback(null);
+    try {
+      const data = await request({ accountId: target.id, confirmation }, 'DELETE');
+      setSelected(null); setNotice(data.message); await load();
+    } catch (e) { setFeedback({ text: (e as Error).message, error: true }); }
+    finally { setBusy(false); }
+  }
+  const authors = accounts.filter(a => a.role !== 'admin');
+  const missingEmail = authors.filter(a => !a.email).length;
+  const term = query.trim().toLocaleLowerCase('pt');
+  const visible = accounts.filter(a => (filter === 'all' || filter === 'authors' && a.role !== 'admin' || filter === 'missing' && a.role !== 'admin' && !a.email)
+    && `${a.displayName} ${a.username} ${a.email || ''}`.toLocaleLowerCase('pt').includes(term));
+  const feedbackElement = feedback && <p className={`account-feedback ${feedback.error ? 'is-error' : ''}`} role={feedback.error ? 'alert' : 'status'}>{feedback.text}</p>;
+
+  if (denied) return <main className="accounts-dashboard accounts-gate"><ShieldCheck size={36}/><h1>Acesso reservado ao administrador</h1><p>Entra com a conta de administrador para gerir os utilizadores.</p><a className="account-button primary" href="/entrar">Entrar na conta</a></main>;
+
+  return <main className="accounts-dashboard">
+    <a className="accounts-back" href="/studio">Voltar ao estúdio editorial</a>
+    <header className="accounts-heading"><div><span className="accounts-eyebrow">ADMINISTRAÇÃO DO LIVRO</span><h1>Contas e acesso</h1><p>Encontra um colega, atualiza os seus dados ou ajuda-o a recuperar a senha.</p></div><button className="account-button primary" disabled={busy || loading || !!loadError} onClick={() => { setCreating(true); setFeedback(null); }}><Plus size={19}/> Novo utilizador</button></header>
+    {notice && <p className="account-feedback" role="status"><CheckCircle2 size={18}/>{notice}</p>}
+    {loadError && <div className="account-feedback is-error" role="alert"><span>{loadError}</span><button onClick={() => void load()}>Tentar novamente</button></div>}
+    <section className="accounts-summary" aria-label="Resumo de contas"><div><Users size={21}/><strong>{loading ? '…' : accounts.length}</strong><span>Contas no livro</span></div><div><Pencil size={21}/><strong>{loading ? '…' : authors.length}</strong><span>Autores</span></div><div><Mail size={21}/><strong>{loading ? '…' : missingEmail}</strong><span>Autores sem e-mail</span></div></section>
+    <section className="accounts-directory" aria-label="Lista de utilizadores" aria-busy={loading}>
+      <div className="accounts-search-row"><label className="accounts-search"><span>Procurar utilizador</span><div><Search size={19} aria-hidden="true"/><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Nome, utilizador ou e-mail"/></div></label><label className="accounts-filter">Mostrar<select value={filter} onChange={e => setFilter(e.target.value)}><option value="all">Todas as contas</option><option value="authors">Apenas autores</option><option value="missing">Autores sem e-mail</option></select></label></div>
+      <div className="accounts-list-heading"><h2>Utilizadores</h2><span>{loading ? 'A carregar…' : `${visible.length} de ${accounts.length} contas`}</span></div>
+      {loading ? <p className="account-empty" role="status">A carregar os utilizadores…</p> : !loadError && visible.length === 0 ? <div className="account-empty"><Search size={28}/><h3>{accounts.length ? 'Nenhum utilizador encontrado' : 'Ainda não existem utilizadores'}</h3><p>{accounts.length ? 'Experimenta outro nome ou altera o filtro.' : 'Cria a primeira conta para começar.'}</p>{accounts.length > 0 && <button onClick={() => { setQuery(''); setFilter('all'); }}>Limpar pesquisa e filtros</button>}</div> : <div className="accounts-list">{!loadError && visible.map(a => <article className="account-row" key={a.id}>
+        <div className="account-person"><div className="account-avatar" aria-hidden="true"><span>{a.displayName.split(' ').filter(Boolean).slice(0, 2).map(n => n[0]).join('')}</span><img src={`/api/profile?photo=1&id=${encodeURIComponent(a.id)}`} alt="" onError={e => { e.currentTarget.style.display = 'none'; }}/></div><div><h3>{a.displayName}</h3><p>@{a.username} <span className={`account-role ${a.role === 'admin' ? 'admin' : ''}`}>{a.role === 'admin' ? 'Administrador' : 'Autor'}</span></p><p className={!a.email ? 'missing-email' : ''}>{a.email || 'E-mail por associar'}</p></div></div>
+        <div className="account-row-actions"><button className="account-button" aria-label={`Editar dados de ${a.displayName}`} onClick={() => open(a, 'edit')}><Pencil size={17}/> Editar dados</button>{a.role !== 'admin' ? <button className="account-button primary" aria-label={`Repor senha de ${a.displayName}`} onClick={() => open(a, 'reset')}><KeyRound size={17}/> Repor senha</button> : <span className="account-protected"><ShieldCheck size={16}/> Conta protegida</span>}</div>
+      </article>)}</div>}
+    </section>
+
+    {creating && <Modal title="Novo utilizador" busy={busy} onClose={close}><p className="dialog-intro">Cria uma conta de autor para um colega participar no livro.</p><form className="account-form" onSubmit={create}><fieldset disabled={busy}><label>Nome completo<input name="displayName" required minLength={3} maxLength={100} autoComplete="name"/></label><label>Nome de utilizador<input name="username" required pattern="[a-zA-Z0-9._-]{3,30}" autoComplete="off"/><small>3 a 30 caracteres: letras sem acentos, números, ponto, hífen ou sublinhado.</small></label><label>E-mail<input name="email" type="email" required maxLength={254} autoComplete="email"/></label><label>Senha inicial<input name="password" type="password" required minLength={8} maxLength={128} autoComplete="new-password"/><small>Pelo menos 8 caracteres. Partilha a senha apenas com o titular.</small></label></fieldset>{feedbackElement}<footer className="dialog-actions"><button type="button" disabled={busy} onClick={close}>Cancelar</button><button className="account-button primary" disabled={busy}>{busy ? 'A criar conta…' : 'Criar conta de autor'}</button></footer></form></Modal>}
+
+    {target && selected && <Modal title={selected.mode === 'reset' ? 'Repor senha' : selected.mode === 'delete' ? 'Eliminar conta' : 'Editar dados'} busy={busy} onClose={close}>
+      <div className="dialog-person"><strong>{target.displayName}</strong><span>@{target.username}</span></div>
+      {selected.mode === 'reset' && <><p className="dialog-intro">O colega vai escolher uma nova senha através de um link válido por <strong>30 minutos</strong>.</p><label className="identity-check"><input type="checkbox" checked={identityConfirmed} disabled={busy} onChange={e => setIdentityConfirmed(e.target.checked)}/><span>Confirmei a identidade do titular desta conta.</span></label>
+        <section className="reset-option"><div><h3>Copiar e partilhar o link</h3><p>Envia-o diretamente ao colega pelo canal habitual. Não é necessário ter e-mail associado.</p></div><button className="account-button primary" disabled={busy || !identityConfirmed} onClick={() => void act('link')}><KeyRound size={18}/>{busy ? 'A processar…' : link ? 'Gerar novo link' : 'Gerar link de recuperação'}</button></section>
+        {link && <div className="reset-result"><label>Link de recuperação para {target.displayName}<input readOnly value={link} onFocus={e => e.currentTarget.select()}/></label><button className="account-button primary" onClick={() => navigator.clipboard.writeText(link).then(() => setFeedback({ text: 'Link copiado. Partilha-o apenas com o titular.' })).catch(() => setFeedback({ text: 'Seleciona o link acima e copia-o manualmente.', error: true }))}><Copy size={18}/> Copiar link</button><small>Quem tiver este link poderá alterar a senha desta conta. Guarda-o em privado.</small></div>}
+        <section className="reset-option email-option"><div><h3>Enviar por e-mail</h3><p>{!target.email ? 'Esta conta ainda não tem e-mail associado.' : !emailReady ? 'O envio automático por e-mail ainda não está disponível. Usa o link acima.' : `Enviar para ${target.email}`}</p></div><button className="account-button" disabled={busy || !identityConfirmed || !emailReady || !target.email} onClick={() => void act('send')}><Mail size={18}/> Enviar link por e-mail</button>{!target.email && <button className="text-button" disabled={busy} onClick={() => open(target, 'edit')}>Associar e-mail à conta</button>}</section>{feedbackElement}
+      </>}
+      {selected.mode === 'edit' && <><ProfileEditor accountId={target.id} initialName={target.displayName} onSaved={() => void load()}/>{target.role !== 'admin' && <><form className="account-form account-email-form" onSubmit={e => { e.preventDefault(); void act('email'); }}><h3>E-mail de contacto</h3><p>Usa o endereço do próprio titular para a recuperação de acesso.</p><label>E-mail<input type="email" required maxLength={254} value={email} disabled={busy} onChange={e => setEmail(e.target.value)}/></label><button className="account-button" disabled={busy}>{busy ? 'A guardar…' : 'Guardar e-mail'}</button></form>{feedbackElement}<details className="account-danger-zone"><summary>Eliminar esta conta</summary><p>A eliminação é permanente. Os testemunhos e as fotografias do livro serão preservados.</p><button className="account-button danger" disabled={busy} onClick={() => { setSelected({ id: target.id, mode: 'delete' }); setFeedback(null); setConfirmation(''); }}><Trash2 size={17}/> Continuar para eliminação</button></details></>}</>}
+      {selected.mode === 'delete' && <form className="account-form" onSubmit={remove}><p className="dialog-intro">Esta ação remove o acesso, os dados de login e a foto de perfil. <strong>Os testemunhos e as fotografias enviados para o livro serão preservados.</strong></p><label>Escreve <strong>{target.username}</strong> para confirmar<input required autoComplete="off" value={confirmation} onChange={e => setConfirmation(e.target.value)} disabled={busy}/></label>{feedbackElement}<footer className="dialog-actions"><button type="button" disabled={busy} onClick={() => open(target, 'edit')}>Voltar aos dados</button><button className="account-button danger" disabled={busy || confirmation !== target.username}>{busy ? 'A eliminar…' : 'Eliminar definitivamente'}</button></footer></form>}
+    </Modal>}
+  </main>;
 }
