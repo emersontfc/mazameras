@@ -20,7 +20,7 @@ nano .env.vps
 ```
 
 Configurar o **mesmo nome de utilizador do administrador existente** e uma senha
-forte com pelo menos 16 caracteres. Guardar as credenciais num gestor de senhas;
+forte com pelo menos 6 caracteres. Guardar as credenciais num gestor de senhas;
 não colar no chat. Configurar Resend se a recuperação por email já estiver ativa.
 
 ```bash
